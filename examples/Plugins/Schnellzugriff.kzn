@@ -1,0 +1,10 @@
+kzn 1
+plugin "Mein Schnellzugriff"
+target compact
+font "Segoe UI" 12
+spacing 8
+clock "HH:mm"
+button "Fokus" timer
+when media.playing
+text "{media.title}"
+end

@@ -1,0 +1,14 @@
+.tools/
+**/bin/
+**/obj/
+.vs/
+artifacts/
+*.user
+*.log
+*.pfx
+*.p12
+.design-rules/
+*.key
+.env
+.env.*
+*.secrets.*

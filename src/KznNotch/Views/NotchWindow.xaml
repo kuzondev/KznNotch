@@ -1,0 +1,43 @@
+<Window x:Class="KznNotch.Views.NotchWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:motion="clr-namespace:KznNotch.Animations" xmlns:views="clr-namespace:KznNotch.Views" Title="Kzn Notch" WindowStyle="None" AllowsTransparency="True" Background="Transparent" Foreground="{DynamicResource TextBrush}" FontFamily="{DynamicResource NotchFont}" FontSize="13" ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True" Width="470" Height="480" UseLayoutRounding="True" PreviewKeyDown="Window_KeyDown" PreviewMouseLeftButtonDown="Window_PreviewMouseDown">
+  <Window.Resources>
+    <Style x:Key="FunctionTab" TargetType="Button" BasedOn="{StaticResource IslandIconButton}">
+      <Setter Property="Width" Value="32"/><Setter Property="Height" Value="32"/><Setter Property="MinHeight" Value="32"/><Setter Property="Margin" Value="1,0"/>
+      <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/><Setter Property="ToolTip" Value="{Binding Name}"/>
+      <Style.Triggers><DataTrigger Binding="{Binding IsSelected}" Value="True"><Setter Property="Background" Value="{DynamicResource SelectionBrush}"/><Setter Property="Foreground" Value="{DynamicResource SelectionTextBrush}"/></DataTrigger></Style.Triggers>
+    </Style>  </Window.Resources>
+  <Grid>
+    <Border x:Name="Shell" Width="220" Height="40" VerticalAlignment="Top" HorizontalAlignment="Center" CornerRadius="22" Background="#FC080808" MouseEnter="Shell_Enter" MouseLeave="Shell_Leave" MouseLeftButtonUp="Shell_Click" ClipToBounds="True">
+      <Grid>
+        <TextBlock Text="{Binding GamingLabel}" Visibility="{Binding GamingMinimal, Converter={StaticResource BoolVisibility}}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <ItemsControl x:Name="Compact" ItemsSource="{Binding CompactItems}" Visibility="{Binding ShowDefaultCompact, Converter={StaticResource BoolVisibility}}" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="12,0" Height="40">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" VerticalAlignment="Center"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate><DataTemplate><StackPanel Orientation="Horizontal" Margin="7,0" VerticalAlignment="Center"><Image Source="{Binding Image}" Width="24" Height="24" Stretch="UniformToFill" Margin="0,0,4,0"><Image.Clip><RectangleGeometry Rect="0,0,24,24" RadiusX="6" RadiusY="6"/></Image.Clip><Image.Style><Style TargetType="Image"><Style.Triggers><DataTrigger Binding="{Binding Image}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Image.Style></Image><TextBlock Text="{Binding Glyph}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Glyph}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock><TextBlock Text="{Binding Text}" FontWeight="SemiBold" VerticalAlignment="Center" FontSize="12" MaxWidth="140" TextTrimming="CharacterEllipsis"/></StackPanel></DataTemplate></ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <views:KznSurface x:Name="PluginSurface" Host="{Binding Host}" Document="{Binding Host.Plugins.ActiveDocument}" BaseDirectory="{Binding Host.Plugins.ActiveDirectory}" Visibility="{Binding ShowPluginCompact, Converter={StaticResource BoolVisibility}}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,0"/>
+        <Grid x:Name="Details" Visibility="{Binding ShowDetails, Converter={StaticResource BoolVisibility}}" Margin="20,0,20,10">
+          <Grid.RowDefinitions><RowDefinition Height="44"/><RowDefinition/><RowDefinition Height="48"/></Grid.RowDefinitions>
+          <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="{Binding ModeTitle}" FontWeight="SemiBold" FontSize="12"/><TextBlock Text="{Binding Host.Clock.Time}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="12,0,0,0" VerticalAlignment="Center"/></StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Button Style="{StaticResource IslandIconButton}" Content="&#xE713;" Click="Settings_Click" ToolTip="Einstellungen" AutomationProperties.Name="Einstellungen"/><Button Style="{StaticResource IslandIconButton}" Content="&#xE70E;" Click="Collapse_Click" ToolTip="Schließen (Esc)" AutomationProperties.Name="Schließen"/></StackPanel>
+          </Grid>
+          <ScrollViewer x:Name="FunctionScroll" Grid.Row="1" Padding="0,4,0,6" HorizontalContentAlignment="Stretch">
+            <Grid><ContentControl x:Name="FunctionContent" Content="{Binding SelectedWidget.Widget}" HorizontalContentAlignment="Stretch"/>
+              <StackPanel Visibility="{Binding HasWidgets, Converter={StaticResource InverseVisibility}}" VerticalAlignment="Center" Margin="0,16"><TextBlock Text="Deine Notch. Deine Funktionen." FontWeight="SemiBold"/><TextBlock Text="Aktiviere Funktionen in den Einstellungen." Style="{StaticResource Muted}" Margin="0,8,0,0" TextWrapping="Wrap"/></StackPanel>
+            </Grid>
+          </ScrollViewer>
+          <Grid Grid.Row="2" Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition/><ColumnDefinition Width="28"/></Grid.ColumnDefinitions>
+            <Button Style="{StaticResource IslandIconButton}" Content="&#xE76B;" Width="28" Command="{Binding PreviousWidgetCommand}" ToolTip="Vorherige Funktion (Alt+←)" AutomationProperties.Name="Vorherige Funktion"/>
+            <Border Grid.Column="1" Background="{DynamicResource NavigationBrush}" CornerRadius="17" Padding="3" HorizontalAlignment="Center" VerticalAlignment="Center"><ItemsControl x:Name="FunctionPicker" ItemsSource="{Binding VisibleWidgets}" HorizontalAlignment="Center" VerticalAlignment="Center" AutomationProperties.Name="Funktion auswählen">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate><DataTemplate><Button Style="{StaticResource FunctionTab}" Content="{Binding Glyph}" Command="{Binding DataContext.SelectWidgetCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/></DataTemplate></ItemsControl.ItemTemplate>
+            </ItemsControl></Border>
+            <Button Grid.Column="2" Style="{StaticResource IslandIconButton}" Content="&#xE76C;" Width="28" Command="{Binding NextWidgetCommand}" ToolTip="Nächste Funktion (Alt+→)" AutomationProperties.Name="Nächste Funktion"/>
+          </Grid>
+        </Grid>
+        <Border x:Name="EventPanel" VerticalAlignment="Top" Background="#FA101012" CornerRadius="20" Padding="18,12" Visibility="{Binding ShowEvent, Converter={StaticResource BoolVisibility}}">
+          <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="{Binding Host.Events.Current.Glyph}" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="20" VerticalAlignment="Center"/><StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="{Binding Host.Events.Current.Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Host.Events.Current.Detail}" Style="{StaticResource Muted}" TextTrimming="CharacterEllipsis" Margin="0,4,0,0"/></StackPanel><Button Grid.Column="2" Style="{StaticResource IslandIconButton}" Content="&#xE711;" Click="Dismiss_Click" ToolTip="Hinweis schließen" AutomationProperties.Name="Hinweis schließen"/></Grid>
+        </Border>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

@@ -1,0 +1,7 @@
+kzn 1
+plugin "Meine Uhr"
+description "Eigene Schrift und Uhrzeit"
+target compact
+font "Consolas" 16
+color "#A8BDFF"
+clock "HH:mm:ss"

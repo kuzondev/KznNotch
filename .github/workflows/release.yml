@@ -1,0 +1,52 @@
+name: Build signed release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Validate release version
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content src/KznNotch/KznNotch.csproj
+          $version = $project.Project.PropertyGroup.Version | Select-Object -First 1
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$version") { throw 'Tag and project version differ.' }
+      - name: Build and publish
+        shell: pwsh
+        run: ./scripts/build.ps1 -Publish
+      - name: Sign package
+        id: signing
+        shell: pwsh
+        env:
+          SIGNING_PFX: ${{ secrets.KZN_SIGNING_PFX_BASE64 }}
+          SIGNING_PASSWORD: ${{ secrets.KZN_SIGNING_PASSWORD }}
+        run: |
+          if (-not $env:SIGNING_PFX) { Write-Warning 'Signing secrets are not configured. Build-only run; publish a locally signed package or configure the existing signing identity.'; exit 0 }
+          $signingPath = Join-Path $env:RUNNER_TEMP 'kzn-signing.pfx'
+          try {
+            [IO.File]::WriteAllBytes($signingPath, [Convert]::FromBase64String($env:SIGNING_PFX))
+            ./scripts/package-msix.ps1 -SigningCertificate $signingPath -CertificatePassword $env:SIGNING_PASSWORD
+            'signed=true' >> $env:GITHUB_OUTPUT
+          } finally { if (Test-Path -LiteralPath $signingPath) { Remove-Item -LiteralPath $signingPath -Force } }
+      - name: Upload build
+        if: steps.signing.outputs.signed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-kzn-release
+          path: artifacts/KznNotch-installer/*.msix
+      - name: Publish GitHub Release
+        if: github.ref_type == 'tag' && steps.signing.outputs.signed == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$env:GITHUB_REF_NAME" artifacts/KznNotch-installer/*.msix --verify-tag --title "Kzn Notch $env:GITHUB_REF_NAME" --generate-notes
