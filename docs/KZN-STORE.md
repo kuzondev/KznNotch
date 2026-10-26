@@ -54,3 +54,9 @@ Die installierte App registriert `KznNotchStartup` als Windows-Startaufgabe. Bei
 Wenn Windows die Startaufgabe durch den Benutzer oder eine Richtlinie gesperrt hat, zeigt die App den tatsächlichen Status. Einstellungen → Allgemein → Windows-Autostart öffnen führt direkt zur Windows-Verwaltung. Windows-seitige Deaktivierungen werden respektiert.
 
 API-Grundlage: [Microsoft StartupTask](https://learn.microsoft.com/en-us/uwp/api/windows.applicationmodel.startuptask).
+
+## Lokales Testitem
+
+`KznNotch.exe --store-demo` aktiviert „KZN Test“ ausschließlich im aktuellen lokalen Store-Profil. Neue Profile zeigen es nicht. Es wird nicht in den Programmkatalog exportiert. In der Detailseite lässt sich das Item mit „Testitem ausblenden“ wieder deaktivieren.
+
+Die Demo erzeugt pro geöffnetem Fenster zufällige, ausdrücklich gekennzeichnete Demo-Sterne. Installieren zeigt einen abbrechbaren Fortschritt und einen simulierten Abschluss; Testen zeigt eine Rückmeldung, Zurücksetzen ermöglicht einen weiteren Durchlauf. Es werden keine Installer heruntergeladen oder Programme installiert. Der simulierte Installationszustand gilt nur bis zum Schließen des Fensters. Der GitHub-Button zeigt den tatsächlichen Quellcode der Demo im Kzn-Repository.

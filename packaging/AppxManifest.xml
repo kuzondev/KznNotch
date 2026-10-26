@@ -5,7 +5,7 @@
          xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="uap uap3 desktop rescap">
-  <Identity Name="Notchify.Desktop" Publisher="CN=Notchify Development" Version="0.10.0.0" ProcessorArchitecture="x64"/>
+  <Identity Name="Notchify.Desktop" Publisher="CN=Notchify Development" Version="0.10.1.0" ProcessorArchitecture="x64"/>
   <Properties><DisplayName>Kzn Notch</DisplayName><PublisherDisplayName>Kzn Notch</PublisherDisplayName><Logo>Assets\StoreLogo.png</Logo><Description>Deine dynamische Windows-Notch</Description></Properties>
   <Dependencies><TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26100.0"/></Dependencies>
   <Resources><Resource Language="de-de"/></Resources>

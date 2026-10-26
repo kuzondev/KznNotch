@@ -56,7 +56,7 @@ public sealed partial class StoreWindow
         var updates = Pill(_checkingUpdates ? "Checking" : "CheckUpdates", () => _ = CheckUpdatesAsync()); updates.IsEnabled = !_checkingUpdates && _download is null; updates.Margin = new Thickness(8, 0, 12, 0); controls.Children.Add(updates);
         var languages = new ComboBox { Width = 94, Padding = new Thickness(8), VerticalAlignment = VerticalAlignment.Center, ItemsSource = new[] { "Deutsch", "English" }, SelectedIndex = _strings.Language == "de" ? 0 : 1 };
         AutomationProperties.SetName(languages, _strings["Language"]); controls.Children.Add(languages);
-        languages.SelectionChanged += (_, _) => { _strings.Language = languages.SelectedIndex == 0 ? "de" : "en"; _storage.Save("preferences.json", new StorePreferences { Language = _strings.Language }); Build(); };
+        languages.SelectionChanged += (_, _) => { _strings.Language = languages.SelectedIndex == 0 ? "de" : "en"; SavePreferences(); Build(); };
         var body = new Grid { Margin = new Thickness(30, 0, 30, 0) }; Grid.SetRow(body, 1); root.Children.Add(body);
         body.RowDefinitions.Add(new() { Height = GridLength.Auto }); body.RowDefinitions.Add(new()); body.RowDefinitions.Add(new() { Height = GridLength.Auto });
         var toolbar = new DockPanel { Margin = new Thickness(0, 0, 0, 18) }; body.Children.Add(toolbar);
@@ -104,16 +104,18 @@ public sealed partial class StoreWindow
     }
     private string Stars(StoreProduct product)
     {
+        if (IsDemo(product)) return _demoStars.ToString("N0", CultureInfo.GetCultureInfo(_strings.Language == "de" ? "de-DE" : "en-US"));
         if (_community.TryGetValue(product.Repository, out var community)) return community is null ? _strings["OfflineStars"] : community.Stars.ToString("N0", CultureInfo.GetCultureInfo(_strings.Language == "de" ? "de-DE" : "en-US"));
         return _refreshingCommunity ? _strings["LoadingStars"] : _strings["OfflineStars"];
     }
     private Button CommunityButton(StoreProduct product)
     {
-        var button = Pill("Stars", () => OpenRepository(product)); button.Content = "☆ " + Stars(product) + " · " + _strings["Stars"];
-        button.ToolTip = _strings["StarsHint"]; button.Background = Brushes.Transparent; button.HorizontalAlignment = HorizontalAlignment.Left; button.Padding = new Thickness(0, 5, 0, 5); return button;
+        var button = Pill("Stars", () => OpenRepository(product)); button.Content = "☆ " + Stars(product) + " · " + _strings[IsDemo(product) ? "DemoStars" : "Stars"];
+        button.ToolTip = _strings[IsDemo(product) ? "DemoOnly" : "StarsHint"]; button.Background = Brushes.Transparent; button.HorizontalAlignment = HorizontalAlignment.Left; button.Padding = new Thickness(0, 5, 0, 5); return button;
     }
     private void OpenRepository(StoreProduct product)
     {
+        if (IsDemo(product)) { OpenDemoSource(); return; }
         if (!GitHubCommunityClient.ValidRepository(product.Repository)) return;
         try { Process.Start(new ProcessStartInfo("https://github.com/" + product.Repository) { UseShellExecute = true }); }
         catch (Exception ex) { _status.Text = _strings["Error"] + ex.Message; }
@@ -148,7 +150,7 @@ public sealed partial class StoreWindow
     {
         _products.Children.Clear();
         if (_selectedProduct is { } selected) { RenderDetail(selected); return; }
-        var products = _catalog.Products.Where(p => (p.Name + " " + p.Describe(_strings.Language)).Contains(_search.Text, StringComparison.CurrentCultureIgnoreCase)).Where(p => !_library || Installed(p) is not null).ToList();
+        var products = (_demoEnabled ? _catalog.Products.Concat(new[] { _demoProduct }) : _catalog.Products).Where(p => (p.Name + " " + p.Describe(_strings.Language)).Contains(_search.Text, StringComparison.CurrentCultureIgnoreCase)).Where(p => !_library || (IsDemo(p) ? _demoInstalled : Installed(p) is not null)).ToList();
         if (_page == "today" && _search.Text.Length == 0 && products.FirstOrDefault(p => p.Id == "kzn-notch") is { } feature) _products.Children.Add(Feature(feature));
         if (products.Count == 0) { _products.Children.Add(Label(_strings["Empty"], 15, true)); return; }
         var section = Label(_strings[_page == "today" ? "ForYou" : _library ? "Library" : "AllApps"], 21); section.FontWeight = FontWeights.Bold; section.Margin = new Thickness(0, 0, 0, 12); _products.Children.Add(section);
@@ -160,8 +162,9 @@ public sealed partial class StoreWindow
             var copy = new StackPanel { Margin = new Thickness(0, 0, 14, 0) }; Grid.SetColumn(copy, 1); row.Children.Add(copy);
             var name = Pill("ViewApp", () => { _selectedProduct = product; Build(); }); name.Content = product.Name; name.FontSize = 17; name.Padding = new Thickness(0); name.MinHeight = 22; name.Background = Brushes.Transparent; name.SetResourceReference(Control.ForegroundProperty, "TextBrush"); copy.Children.Add(name);
             copy.Children.Add(Label(product.Describe(_strings.Language), 12, true));
-            if (GitHubCommunityClient.ValidRepository(product.Repository)) copy.Children.Add(CommunityButton(product));
-            var action = ProductAction(product); Grid.SetColumn(action, 2); action.VerticalAlignment = VerticalAlignment.Center; row.Children.Add(action);
+            if (IsDemo(product)) copy.Children.Add(Label(_strings["DemoBadge"], 11, true));
+            if (IsDemo(product) || GitHubCommunityClient.ValidRepository(product.Repository)) copy.Children.Add(CommunityButton(product));
+            var action = ProductActions(product); Grid.SetColumn(action, 2); action.VerticalAlignment = VerticalAlignment.Center; row.Children.Add(action);
             if (product != products[^1]) { var line = new Border { Height = 1, Margin = new Thickness(74, 2, 0, 2) }; line.SetResourceReference(Border.BackgroundProperty, "DividerBrush"); list.Children.Add(line); }
         }
     }
@@ -169,14 +172,20 @@ public sealed partial class StoreWindow
     {
         var header = new Grid { Margin = new Thickness(0, 0, 0, 22) }; header.ColumnDefinitions.Add(new() { Width = new GridLength(108) }); header.ColumnDefinitions.Add(new()); header.Children.Add(AppIcon(product, 90));
         var title = new StackPanel(); Grid.SetColumn(title, 1); header.Children.Add(title); title.Children.Add(Label(product.Name, 27)); title.Children.Add(Label(product.Describe(_strings.Language), 14, true));
-        var action = ProductAction(product); action.HorizontalAlignment = HorizontalAlignment.Left; action.Margin = new Thickness(0, 12, 0, 0); title.Children.Add(action); _products.Children.Add(header);
+        var action = ProductActions(product); action.HorizontalAlignment = HorizontalAlignment.Left; action.Margin = new Thickness(0, 12, 0, 0); title.Children.Add(action); _products.Children.Add(header);
         var info = new UniformGrid { Columns = 3, Margin = new Thickness(0, 0, 0, 24) };
-        foreach (var (label, value) in new[] { (_strings["Stars"], Stars(product)), (_strings["Version"], product.Version), (_strings["Platform"], "Windows 11") })
+        foreach (var (label, value) in new[] { (_strings[IsDemo(product) ? "DemoStars" : "Stars"], Stars(product)), (_strings["Version"], product.Version), (_strings["Platform"], "Windows 11") })
         { var cell = new StackPanel { Margin = new Thickness(10) }; cell.Children.Add(Label(label.ToUpperInvariant(), 11, true)); var number = Label(value, 20); number.FontWeight = FontWeights.SemiBold; cell.Children.Add(number); info.Children.Add(cell); }
         _products.Children.Add(Surface(info, 18, 6)); var spacer = new Border { Height = 22 }; _products.Children.Add(spacer);
         if (product.Id == "kzn-notch") _products.Children.Add(Feature(product, true));
         var about = Label(_strings["AboutApp"], 22); about.FontWeight = FontWeights.Bold; _products.Children.Add(about);
         var description = Label(product.Describe(_strings.Language), 15); description.Margin = new Thickness(0, 10, 0, 12); _products.Children.Add(description);
+        if (IsDemo(product))
+        {
+            _products.Children.Add(Label(_strings["DemoOnly"], 13, true));
+            var hide = Pill("HideDemo", () => { _demoCancellation?.Cancel(); _demoEnabled = false; _selectedProduct = null; SavePreferences(); Build(); });
+            hide.HorizontalAlignment = HorizontalAlignment.Left; hide.Margin = new Thickness(0, 16, 0, 16); _products.Children.Add(hide);
+        }
         if (GitHubCommunityClient.ValidRepository(product.Repository))
         { _products.Children.Add(CommunityButton(product)); _products.Children.Add(Label(_strings["StarsHint"], 12, true)); var source = Pill("Source", () => OpenRepository(product)); source.HorizontalAlignment = HorizontalAlignment.Left; source.Margin = new Thickness(0, 12, 0, 12); _products.Children.Add(source); }
     }

@@ -118,6 +118,7 @@ internal static class Program
         resources.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/KznNotch;component/Views/Theme.xaml") });
         resources.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/KznNotch;component/Views/WidgetTemplates.xaml") });
         await StoreChecks.WindowAsync(directory, Check, SaveImage);
+        await StoreDemoChecks.RunAsync(directory, Check, SaveImage);
         await DiscordChecks.VerifyCardAsync(directory, Check);
         using var host = new AppHost(Path.Combine(directory, "ui-data"));
         host.Settings.Current.Notifications = false; host.Settings.Current.BluetoothEnabled = false;

@@ -5,6 +5,12 @@ public sealed class StoreStrings
     public string Language { get; set; } = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de" ? "de" : "en";
     private static readonly Dictionary<string, (string De, string En)> Text = new()
     {
+        ["GitHub"] = ("GitHub", "GitHub"), ["DemoBadge"] = ("NUR LOKAL · DEMO", "LOCAL ONLY · DEMO"),
+        ["DemoStars"] = ("Demo-Sterne", "Demo stars"), ["DemoOnly"] = ("Lokale Vorschau: Sterne sind zufällig. Die Installation ist simuliert und lädt keine Dateien herunter.", "Local preview: stars are random. Installation is simulated and downloads no files."),
+        ["DemoInstalling"] = ("Installiert…", "Installing…"), ["DemoOpen"] = ("Testen", "Try demo"),
+        ["DemoComplete"] = ("KZN Test wurde simuliert installiert. Es wurden keine Programme oder Dateien installiert.", "KZN Test finished its simulated installation. No apps or files were installed."),
+        ["DemoReset"] = ("Zurücksetzen", "Reset demo"), ["HideDemo"] = ("Testitem ausblenden", "Hide test item"),
+        ["DemoSource"] = ("Quellcode dieser Demo im Kzn-Store-Repository ansehen", "View this demo's source in the Kzn Store repository"),
         ["Today"] = ("Heute", "Today"), ["Apps"] = ("Apps", "Apps"),
         ["Featured"] = ("IM FOKUS", "FEATURED"), ["HeroTitle"] = ("Kleine Notch.\nGroße Möglichkeiten.", "Small notch.\nBig possibilities."),
         ["HeroSubtitle"] = ("Musik, Fokus und dein Alltag. Immer griffbereit.", "Music, focus and your day. Always within reach."),

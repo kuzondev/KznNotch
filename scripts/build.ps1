@@ -21,5 +21,5 @@ if ($Publish) {
     if ($LASTEXITCODE -ne 0) { throw 'Store-Launcher fehlgeschlagen.' }
     Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE'), (Join-Path $projectRoot 'README.md'), (Join-Path $projectRoot 'THIRD-PARTY-NOTICES.md'), (Join-Path $projectRoot 'DESIGN.md') -Destination (Join-Path $projectRoot 'artifacts\KznNotch-win-x64') -Force
     Copy-Item -LiteralPath (Join-Path $projectRoot 'docs') -Destination (Join-Path $projectRoot 'artifacts\KznNotch-win-x64') -Recurse -Force
-    Compress-Archive -Path (Join-Path $projectRoot 'artifacts\KznNotch-win-x64\*') -DestinationPath (Join-Path $projectRoot 'artifacts\KznNotch-0.10.0-win-x64.zip') -Force
+    Compress-Archive -Path (Join-Path $projectRoot 'artifacts\KznNotch-win-x64\*') -DestinationPath (Join-Path $projectRoot 'artifacts\KznNotch-0.10.1-win-x64.zip') -Force
 }

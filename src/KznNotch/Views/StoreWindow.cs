@@ -28,7 +28,7 @@ public sealed partial class StoreWindow : Window
     private readonly CancellationTokenSource _lifetime = new();
     private bool _refreshingCommunity, _checkingUpdates, _closed;
     private DateTimeOffset _lastCommunityRefresh;
-    public StoreWindow(string? dataDirectory = null, Func<string, CancellationToken, Task<GitHubCommunity?>>? communityLoader = null, Func<string, Task>? updateChecker = null)
+    public StoreWindow(string? dataDirectory = null, Func<string, CancellationToken, Task<GitHubCommunity?>>? communityLoader = null, Func<string, Task>? updateChecker = null, bool enableDemo = false)
     {
         _communityLoader = communityLoader ?? ((repository, cancellation) => GitHubCommunityClient.FetchAsync(repository, cancellation));
         _updateChecker = updateChecker ?? (language => Services.GitHubUpdateService.CheckAndPromptAsync(true, language));
@@ -36,8 +36,10 @@ public sealed partial class StoreWindow : Window
         Title = "Kzn Store"; Width = 980; Height = 820; MinWidth = 640; MinHeight = 600;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         FontFamily = new FontFamily("Segoe UI Variable Text, Segoe UI"); FontSize = 13;
-        var language = _storage.Load("preferences.json", () => new StorePreferences()).Language;
-        if (language is "de" or "en") _strings.Language = language;
+        var preferences = _storage.Load("preferences.json", () => new StorePreferences());
+        if (preferences.Language is "de" or "en") _strings.Language = preferences.Language;
+        _demoEnabled = preferences.DemoEnabled || enableDemo;
+        if (enableDemo) SavePreferences();
         var catalogPath = Path.Combine(_storage.DirectoryPath, "catalog.json");
         if (File.Exists(catalogPath))
         {
@@ -142,5 +144,6 @@ public sealed partial class StoreWindow : Window
         catch (Exception ex) { _statusKey = "Error"; _error = ex.Message; Log.Error("Store install", ex); }
         finally { _download = null; _progress.Visibility = Visibility.Collapsed; Build(); }
     }
-    private sealed class StorePreferences { public string Language { get; set; } = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de" ? "de" : "en"; }
+    private void SavePreferences() => _storage.Save("preferences.json", new StorePreferences { Language = _strings.Language, DemoEnabled = _demoEnabled });
+    private sealed class StorePreferences { public string Language { get; set; } = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de" ? "de" : "en"; public bool DemoEnabled { get; set; } }
 }
