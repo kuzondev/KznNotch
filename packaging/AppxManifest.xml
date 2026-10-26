@@ -5,7 +5,7 @@
          xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="uap uap3 desktop rescap">
-  <Identity Name="Notchify.Desktop" Publisher="CN=Notchify Development" Version="0.10.1.0" ProcessorArchitecture="x64"/>
+  <Identity Name="Notchify.Desktop" Publisher="CN=Notchify Development" Version="0.10.7.0" ProcessorArchitecture="x64"/>
   <Properties><DisplayName>Kzn Notch</DisplayName><PublisherDisplayName>Kzn Notch</PublisherDisplayName><Logo>Assets\StoreLogo.png</Logo><Description>Deine dynamische Windows-Notch</Description></Properties>
   <Dependencies><TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26100.0"/></Dependencies>
   <Resources><Resource Language="de-de"/></Resources>
@@ -13,9 +13,7 @@
     <uap:VisualElements DisplayName="Kzn Notch" Description="Deine dynamische Windows-Notch" BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png"/>
     <Extensions><desktop:Extension Category="windows.startupTask" Executable="KznNotch.exe" EntryPoint="Windows.FullTrustApplication"><desktop:StartupTask TaskId="KznNotchStartup" Enabled="false" DisplayName="Kzn Notch"/></desktop:Extension></Extensions>
   </Application>
-  <Application Id="Store" Executable="KznStore.exe" EntryPoint="Windows.FullTrustApplication">
-    <uap:VisualElements DisplayName="Kzn Store" Description="Alle deine Kzn-Programme" BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png"/>
-  </Application></Applications>
+  </Applications>
   <Capabilities>
     <rescap:Capability Name="runFullTrust"/>
 

@@ -10,7 +10,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>KznNotch</AssemblyName>
     <RootNamespace>KznNotch</RootNamespace>
-    <Version>0.10.1</Version>
+    <Version>0.10.7</Version>
     <Product>Kzn Notch</Product>
     <Title>Kzn Notch</Title>
     <Description>Compact desktop companion for Windows 11</Description>

@@ -2,7 +2,7 @@
 param([switch]$TrustDevelopmentCertificate)
 $ErrorActionPreference = 'Stop'
 Start-Transcript -Path (Join-Path $PSScriptRoot 'install.log') -Append | Out-Null
-$package = Join-Path $PSScriptRoot 'KznNotch-0.10.1-x64.msix'
+$package = Join-Path $PSScriptRoot 'KznNotch-0.10.7-x64.msix'
 if (-not (Test-Path -LiteralPath $package)) { throw 'Das KznNotch-MSIX muss neben diesem Installationsskript liegen.' }
 if ($TrustDevelopmentCertificate) {
     # Explicit installer opt-in only. Broad public releases must use a production/Store signature.

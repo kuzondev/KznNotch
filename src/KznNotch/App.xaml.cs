@@ -7,12 +7,6 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        if (e.Args.Contains("--store") || e.Args.Contains("--store-demo"))
-        {
-            var storeWindow = new Views.StoreWindow(enableDemo: e.Args.Contains("--store-demo"));
-            storeWindow.Closed += (_, _) => Shutdown();
-            MainWindow = storeWindow; storeWindow.Show(); return;
-        }
         if (e.Args.Length == 2 && e.Args[0] == "--fps-helper")
         {
             try { await Services.FpsCaptureHelper.RunAsync(e.Args[1]); }

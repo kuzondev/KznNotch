@@ -57,7 +57,6 @@ internal static class Program
         store.Save("settings.json", new AppSettings { Notifications = false, BluetoothEnabled = false });
         var settings = new SettingsService(store);
         KznPluginChecks.Run(directory, Check); KznPluginChecks.Games(directory, Check);
-        await StoreChecks.RunAsync(directory, Check);
         await UpdateChecks.RunAsync(Check);
         var customColors = new AppSettings { BarColor = "#12ABCD", SecondaryColor = "#ABCDEF", NavigationColor = "#102030", OpenHeight = 420, BarThickness = 7 };
         store.Save("custom-colors.json", customColors);
@@ -117,8 +116,6 @@ internal static class Program
         var resources = Application.Current.Resources.MergedDictionaries;
         resources.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/KznNotch;component/Views/Theme.xaml") });
         resources.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/KznNotch;component/Views/WidgetTemplates.xaml") });
-        await StoreChecks.WindowAsync(directory, Check, SaveImage);
-        await StoreDemoChecks.RunAsync(directory, Check, SaveImage);
         await DiscordChecks.VerifyCardAsync(directory, Check);
         using var host = new AppHost(Path.Combine(directory, "ui-data"));
         host.Settings.Current.Notifications = false; host.Settings.Current.BluetoothEnabled = false;

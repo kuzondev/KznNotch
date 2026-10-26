@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
+using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Xml.Linq;
 using System.Windows.Controls;
-using KznNotch.Store;
 
 namespace KznNotch.Services;
 
@@ -96,15 +98,57 @@ public static class GitHubUpdateService
         cancel.Click += (_, _) => window.Close(); window.Closed += (_, _) => cancellation.Cancel(); window.Show();
         try
         {
-            var publisher = "CN=Notchify Development";
-            try { publisher = Windows.ApplicationModel.Package.Current.Id.Publisher; } catch (InvalidOperationException) { }
-            var product = new StoreProduct { PackageName = "Notchify.Desktop", Publisher = publisher, Version = update.Version.ToString(), DownloadUrl = update.Url, Sha256 = update.Sha256 };
-            var path = await StoreCatalog.DownloadAsync(product, Path.Combine(Log.DirectoryPath, "Updates"), new Progress<double>(p => progress.Value = p), cancellation.Token);
+            var path = await DownloadAndVerifyPackageAsync(update, Path.Combine(Log.DirectoryPath, "Updates"), new Progress<double>(p => progress.Value = p), cancellation.Token);
             if (!cancellation.IsCancellationRequested) Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
         { Log.Error("Update download", ex); MessageBox.Show(T("Das Update konnte nicht installiert werden. Deine bisherige Version bleibt erhalten.", "The update could not be installed. Your current version is unchanged."), "Kzn Notch", MessageBoxButton.OK, MessageBoxImage.Warning); }
         finally { window.Close(); }
+    }
+
+    private static async Task<string> DownloadAndVerifyPackageAsync(GitHubUpdate update, string directory, IProgress<double> progress, CancellationToken cancellation)
+    {
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, Guid.NewGuid().ToString("N") + ".msix");
+        using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(15) };
+        try
+        {
+            using var response = await client.GetAsync(update.Url, HttpCompletionOption.ResponseHeadersRead, cancellation);
+            response.EnsureSuccessStatusCode();
+            if (response.RequestMessage?.RequestUri is not { Scheme: "https" } || response.RequestMessage.RequestUri.UserInfo.Length != 0)
+                throw new InvalidDataException("Update must be served over HTTPS.");
+            const long maximum = 1024L * 1024 * 1024;
+            if (response.Content.Headers.ContentLength > maximum) throw new InvalidDataException("Update package too large.");
+            await using var input = await response.Content.ReadAsStreamAsync(cancellation);
+            using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            await using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true))
+            {
+                var buffer = new byte[81920]; long received = 0; int count;
+                while ((count = await input.ReadAsync(buffer, cancellation)) > 0)
+                {
+                    received += count;
+                    if (received > maximum) throw new InvalidDataException("Update package too large.");
+                    hash.AppendData(buffer, 0, count);
+                    await output.WriteAsync(buffer.AsMemory(0, count), cancellation);
+                    var total = response.Content.Headers.ContentLength;
+                    if (total is > 0) progress.Report(received * 100d / total.Value);
+                }
+            }
+            if (!Convert.ToHexString(hash.GetHashAndReset()).Equals(update.Sha256, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("Update SHA-256 mismatch.");
+            using var archive = ZipFile.OpenRead(path);
+            var manifest = archive.GetEntry("AppxManifest.xml") ?? throw new InvalidDataException("MSIX manifest missing.");
+            if (manifest.Length > 1024 * 1024) throw new InvalidDataException("MSIX manifest too large.");
+            using var stream = manifest.Open();
+            using var reader = System.Xml.XmlReader.Create(stream, new() { DtdProcessing = System.Xml.DtdProcessing.Prohibit, MaxCharactersInDocument = 1024 * 1024 });
+            var identity = XDocument.Load(reader).Root?.Elements().FirstOrDefault(x => x.Name.LocalName == "Identity");
+            if ((string?)identity?.Attribute("Name") != "Notchify.Desktop"
+                || (string?)identity?.Attribute("Publisher") != "CN=Notchify Development"
+                || !Version.TryParse((string?)identity?.Attribute("Version"), out var version) || version != update.Version)
+                throw new InvalidDataException("MSIX identity or version does not match the release.");
+            return path;
+        }
+        catch { if (File.Exists(path)) File.Delete(path); throw; }
     }
 }

@@ -88,7 +88,7 @@ public sealed class MediaService : ObservableObject, IDisposable
             var coverKey = $"{session.SourceAppUserModelId}|{props.Title}|{props.Artist}|{props.AlbumTitle}";
             var changed = _coverKey != coverKey;
             Title = string.IsNullOrWhiteSpace(props.Title) ? "Unbenannte Wiedergabe" : props.Title;
-            Artist = string.IsNullOrWhiteSpace(props.Artist) ? props.AlbumTitle : props.Artist;
+            Artist = NormalizeArtist(session.SourceAppUserModelId, props.Artist, props.AlbumTitle);
             Source = FriendlySource(session.SourceAppUserModelId);
             var playback = session.GetPlaybackInfo();
             Playing = playback.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
@@ -133,8 +133,29 @@ public sealed class MediaService : ObservableObject, IDisposable
         catch (Exception ex) { Log.Error("Media seek", ex); }
     }
     private static string Format(TimeSpan value) => value.TotalHours >= 1 ? value.ToString(@"h\:mm\:ss") : value.ToString(@"m\:ss");
+    private static string NormalizeArtist(string app, string? artist, string? album)
+    {
+        if (string.IsNullOrWhiteSpace(artist)) return album ?? "";
+        var value = artist.Trim();
+        if (!IsAppleMusic(app) || string.IsNullOrWhiteSpace(album)) return value;
+
+        // Apple Music for Windows can publish “Artist — Album” as the artist
+        // field. Remove the repeated album suffix so the compact card shows the
+        // actual artist instead of truncating a duplicate metadata string.
+        var albumValue = album.Trim();
+        var albumStart = value.LastIndexOf(albumValue, StringComparison.OrdinalIgnoreCase);
+        if (albumStart <= 0 || !value[albumStart..].Trim().Equals(albumValue, StringComparison.OrdinalIgnoreCase)) return value;
+        var prefix = value[..albumStart].TrimEnd();
+        if (prefix.Length == 0 || !"—–-|·:：".Contains(prefix[^1])) return value;
+        prefix = prefix.TrimEnd('—', '–', '-', '|', '·', ':', '：', ' ');
+        return prefix.Length > 0 ? prefix : value;
+    }
+    private static bool IsAppleMusic(string app) => app.Contains("applemusic", StringComparison.OrdinalIgnoreCase) || app.Contains("apple.music", StringComparison.OrdinalIgnoreCase);
     private static string FriendlySource(string app)
     {
+        // Apple Music for Windows publishes its playback metadata through the
+        // Windows media session API with an app identity containing AppleMusic.
+        if (IsAppleMusic(app)) return "Apple Music";
         if (app.Contains("spotify", StringComparison.OrdinalIgnoreCase)) return "Spotify";
         if (app.Contains("chrome", StringComparison.OrdinalIgnoreCase)) return "Google Chrome";
         if (app.Contains("msedge", StringComparison.OrdinalIgnoreCase)) return "Microsoft Edge";

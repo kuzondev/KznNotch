@@ -1,5 +1,6 @@
 using Microsoft.Win32;
 using KznNotch.Views;
+using System.Diagnostics;
 
 namespace KznNotch.Services;
 
@@ -8,7 +9,6 @@ public sealed class WindowService : IDisposable
     private readonly AppHost _host;
     private readonly List<NotchWindow> _windows = [];
     private SettingsWindow? _settings;
-    private StoreWindow? _store;
     private bool _hidden;
     public bool SettingsOpen => _settings is not null;
     public WindowService(AppHost host)
@@ -51,16 +51,30 @@ public sealed class WindowService : IDisposable
     public void OpenIntegrations() { OpenSettings(); _settings?.SelectIntegrations(); }
     public void OpenDesign() { OpenSettings(); _settings?.SelectDesign(); }
     public void OpenPlugins() { OpenSettings(); _settings?.SelectPlugins(); }
-    public void OpenStore()
+    public async void OpenStore()
     {
-        if (_store is null) { _store = new(); _store.Closed += (_, _) => _store = null; _store.Show(); }
-        else { _store.Show(); if (_store.WindowState == WindowState.Minimized) _store.WindowState = WindowState.Normal; _store.Activate(); }
+        try
+        {
+            var package = new Windows.Management.Deployment.PackageManager().FindPackagesForUser("")
+                .FirstOrDefault(p => p.Id.Name == "KznStore.Desktop" && p.Id.Publisher == "CN=Notchify Development");
+            if (package is not null)
+            {
+                foreach (var entry in await package.GetAppListEntriesAsync())
+                    if (await entry.LaunchAsync()) return;
+            }
+            Process.Start(new ProcessStartInfo("https://github.com/kuzondev/KznStore/releases/latest") { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Open Kzn Store", ex);
+            MessageBox.Show("Kzn Store muss separat installiert werden. Den Installer findest du unter github.com/kuzondev/KznStore/releases.", "Kzn Store", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
     }
     private void DisplayChanged(object? sender, EventArgs e) => Ui.Run(ShowNotches);
     public void Dispose()
     {
         _host.Settings.Changed -= SettingsChanged; SystemEvents.DisplaySettingsChanged -= DisplayChanged;
         _host.Gaming.ModeChanged -= GamingChanged;
-        _store?.Close(); _settings?.Close(); foreach (var window in _windows) window.Close(); _windows.Clear();
+        _settings?.Close(); foreach (var window in _windows) window.Close(); _windows.Clear();
     }
 }
