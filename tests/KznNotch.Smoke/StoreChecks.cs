@@ -45,27 +45,40 @@ internal static class StoreChecks
         try { await StoreCatalog.DownloadAsync(product, badDir, new Progress<double>(), CancellationToken.None, new FixtureHandler(bytes)); } catch (InvalidDataException) { rejected = true; }
         check(rejected && !Directory.EnumerateFiles(badDir).Any(), "Store verwirft manipulierte Downloads vollständig");
         product.DownloadUrl = ""; File.WriteAllText(path, JsonSerializer.Serialize(catalog));
+        var zeroStars = await GitHubCommunityClient.FetchAsync("kuzondev/KznNotch", CancellationToken.None, new FixtureHandler(System.Text.Encoding.UTF8.GetBytes("{\"stargazers_count\":0}")));
+        var missingStars = await GitHubCommunityClient.FetchAsync("kuzondev/KznNotch", CancellationToken.None, new FixtureHandler(System.Text.Encoding.UTF8.GetBytes("{}")));
+        check(zeroStars?.Stars == 0 && missingStars is null, "GitHub-Sterne unterscheiden echte Nullwerte von fehlenden Daten");
+        check(!GitHubCommunityClient.ValidRepository("https://example.org/repo") && !GitHubCommunityClient.ValidRepository("owner/repo/extra"), "Store akzeptiert ausschließlich gültige GitHub-Repository-Bezeichner");
     }
     public static async Task WindowAsync(string root, Action<bool, string> check, Action<FrameworkElement, string> capture)
     {
         var dir = Path.Combine(root, "store-ui"); Directory.CreateDirectory(dir);
         File.WriteAllText(Path.Combine(dir, "preferences.json"), "{\"Language\":\"de\"}");
-        var window = new StoreWindow(dir);
+        int updateChecks = 0;
+        var window = new StoreWindow(dir, (_, _) => Task.FromResult<GitHubCommunity?>(new(42, DateTimeOffset.Now)), _ => { updateChecks++; return Task.CompletedTask; });
         try
         {
             window.Show(); await Task.Delay(150);
-            check(window.IsVisible && Descendants<TextBlock>(window).Any(x => x.Text == "Deine Kzn-Programme."), "Store zeigt echte mehrsprachige Oberfläche");
+            check(window.IsVisible && Descendants<TextBlock>(window).Any(x => x.Text == "Heute"), "Store zeigt echte mehrsprachige Oberfläche");
+            check(Descendants<Button>(window).Any(x => x.Content is string text && text.Contains("42") && text.Contains("GitHub-Sterne")), "Store zeigt geladene GitHub-Sterne mit klarer Quellenbezeichnung");
             capture((FrameworkElement)window.Content, Path.Combine(root, "store-de.png"));
+            Descendants<Button>(window).First(x => x.Content as string == "Kzn Notch").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); await Task.Delay(50);
+            check(Descendants<TextBlock>(window).Any(x => x.Text == "Über diese App"), "App-Eintrag öffnet eine echte Detailseite");
+            capture((FrameworkElement)window.Content, Path.Combine(root, "store-detail.png"));
+            Descendants<Button>(window).First(x => x.Content as string == "Zurück").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); await Task.Delay(50);
+            Descendants<Button>(window).First(x => x.Content as string == "Updates prüfen").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); await Task.Delay(60);
+            check(updateChecks == 1, "Manueller Store-Updateknopf führt die Updatesuche aus");
             Descendants<ComboBox>(window).Single().SelectedIndex = 1; await Task.Delay(100);
-            check(Descendants<TextBlock>(window).Any(x => x.Text == "Your Kzn apps."), "Sprachwechsel aktualisiert den Store unmittelbar");
+            check(Descendants<TextBlock>(window).Any(x => x.Text == "Today"), "Sprachwechsel aktualisiert den Store unmittelbar");
             capture((FrameworkElement)window.Content, Path.Combine(root, "store-en.png"));
             Descendants<TextBox>(window).Single().Text = "not-found";
             check(Descendants<TextBlock>(window).Any(x => x.Text == "No matching apps found."), "Store-Suche zeigt einen lokalisierten Leerzustand");
-            window.Width = 740; await Task.Delay(50);
+            Descendants<TextBox>(window).Single().Text = "";
+            window.Width = 640; await Task.Delay(50);
             capture((FrameworkElement)window.Content, Path.Combine(root, "store-small.png"));
         }
         finally { window.Close(); }
-        var reopened = new StoreWindow(dir);
+        var reopened = new StoreWindow(dir, (_, _) => Task.FromResult<GitHubCommunity?>(null));
         try { reopened.Show(); check(Descendants<ComboBox>(reopened).Single().SelectedIndex == 1, "Store merkt sich die ausgewählte Sprache"); }
         finally { reopened.Close(); }
     }

@@ -2,6 +2,8 @@
 
 Eine native, dunkle Notch für Windows 11. C# · .NET 10 · WPF · MVVM.
 
+**Neu in 0.10:** Kzn Store mit iOS-App-Store-inspirierter Heute-/Apps-/Mediathek-Navigation, App-Detailseiten, echten GitHub-Sternen aus `kuzondev/KznNotch` und manuellem Updateknopf. Deutsch/Englisch und System-Hell-/Dunkelmodus bleiben erhalten.
+
 **Neu in 0.9:** Automatische Updatesuche beim Start über [GitHub Releases](https://github.com/kuzondev/KznNotch/releases), Update-Dialog, abbrechbarer Download und Prüfung von SHA-256, Paketversion und Herausgeber. [Updates veröffentlichen](docs/UPDATES.md).
 
 **Neu in 0.8:** Kzn Store als eigenes Startmenü-Programm, Deutsch/Englisch, erweiterbare Mehr-App-Kataloge, Suche, Mediathek und geprüfte MSIX-Downloads. Der MSIX-Autostart verwendet jetzt eine updatefeste Windows-Startaufgabe. [Store und neue Programme](docs/KZN-STORE.md).

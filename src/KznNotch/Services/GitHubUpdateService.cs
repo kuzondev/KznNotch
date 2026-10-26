@@ -13,7 +13,8 @@ public static class GitHubUpdateService
     public const string Repository = "kuzondev/KznNotch";
     private static bool _checking;
     public static Version CurrentVersion => typeof(GitHubUpdateService).Assembly.GetName().Version ?? new(0, 0, 0, 0);
-    private static bool German => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de";
+    private static readonly AsyncLocal<string?> _language = new();
+    private static bool German => _language.Value == "de" || _language.Value is null && CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de";
     private static string T(string de, string en) => German ? de : en;
     private static Version Normalize(Version v) => new(v.Major, v.Minor, Math.Max(0, v.Build), Math.Max(0, v.Revision));
 
@@ -56,9 +57,10 @@ public static class GitHubUpdateService
         return Parse(System.Text.Encoding.UTF8.GetString(buffer.ToArray()), CurrentVersion);
     }
 
-    public static async Task CheckAndPromptAsync(bool manual = false)
+    public static async Task CheckAndPromptAsync(bool manual = false, string? language = null)
     {
         if (_checking) return; _checking = true;
+        var previousLanguage = _language.Value; _language.Value = language;
         try
         {
             var update = await CheckAsync();
@@ -79,7 +81,7 @@ public static class GitHubUpdateService
             Log.Error("GitHub update check", ex);
             if (manual) MessageBox.Show(T("Die Updatesuche ist momentan nicht möglich. Bitte später erneut versuchen.", "Could not check for updates. Please try again later."), "Kzn Notch", MessageBoxButton.OK, MessageBoxImage.Information);
         }
-        finally { _checking = false; }
+        finally { _checking = false; _language.Value = previousLanguage; }
     }
     private static async Task DownloadAndInstallAsync(GitHubUpdate update)
     {

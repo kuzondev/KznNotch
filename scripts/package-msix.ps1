@@ -30,7 +30,7 @@ foreach ($asset in @(@('StoreLogo.png',50),@('Square44x44Logo.png',44),@('Square
     $bitmap.Save((Join-Path $stage ('Assets\' + $asset[0])),[Drawing.Imaging.ImageFormat]::Png)
     $graphics.Dispose(); $bitmap.Dispose(); $accent.Dispose(); $dark.Dispose()
 }
-$package = Join-Path $output 'KznNotch-0.9.0-x64.msix'
+$package = Join-Path $output 'KznNotch-0.10.0-x64.msix'
 $packOutput = & (Join-Path $SdkBin 'makeappx.exe') pack /d $stage /p $package /o 2>&1
 $packOutput | Set-Content (Join-Path $output 'package-build.log')
 if ($LASTEXITCODE -ne 0) { $packOutput | Select-Object -Last 15 | Write-Output; throw 'MSIX-Validierung fehlgeschlagen.' }

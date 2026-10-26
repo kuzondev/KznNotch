@@ -15,6 +15,9 @@ public sealed class StoreProduct
     public string Publisher { get; set; } = "";
     public string DownloadUrl { get; set; } = "";
     public string Sha256 { get; set; } = "";
+    public string GitHubRepository { get; set; } = "";
+    public string Repository => string.IsNullOrEmpty(GitHubRepository) && Id == "kzn-notch" && PackageName == "Notchify.Desktop"
+        ? Services.GitHubUpdateService.Repository : GitHubRepository;
     public Dictionary<string, string> Description { get; set; } = [];
     public string Describe(string language) => Description.GetValueOrDefault(language)
         ?? Description.GetValueOrDefault("en") ?? Description.Values.FirstOrDefault() ?? "";
@@ -38,6 +41,7 @@ public sealed class StoreCatalog
                 || string.IsNullOrWhiteSpace(p.PackageName) || string.IsNullOrWhiteSpace(p.Publisher)
                 || !System.Version.TryParse(p.Version, out _) || p.Description is null)
                 throw new InvalidDataException("Invalid or duplicate product.");
+            if (!string.IsNullOrEmpty(p.GitHubRepository) && !GitHubCommunityClient.ValidRepository(p.GitHubRepository)) throw new InvalidDataException("Invalid GitHub repository.");
             if (!string.IsNullOrEmpty(p.DownloadUrl) && (!Uri.TryCreate(p.DownloadUrl, UriKind.Absolute, out var uri)
                 || uri.Scheme != "https" || !string.IsNullOrEmpty(uri.UserInfo) || p.Sha256.Length != 64 || !p.Sha256.All(Uri.IsHexDigit)))
                 throw new InvalidDataException("Downloads require HTTPS and SHA-256.");
@@ -48,6 +52,7 @@ public sealed class StoreCatalog
     {
         Id = "kzn-notch", Name = "Kzn Notch", Version = typeof(StoreCatalog).Assembly.GetName().Version?.ToString() ?? "0.8.0.0",
         PackageName = "Notchify.Desktop", Publisher = "CN=Notchify Development",
+        GitHubRepository = Services.GitHubUpdateService.Repository,
         Description = new() { ["de"] = "Musik, Fokus, Aufgaben und deine eigenen .kzn-Erweiterungen – direkt am Bildschirmrand.",
             ["en"] = "Music, focus, tasks and your own .kzn extensions, right at the edge of your screen." }
     }] };

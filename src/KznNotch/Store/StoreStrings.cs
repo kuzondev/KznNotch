@@ -5,6 +5,17 @@ public sealed class StoreStrings
     public string Language { get; set; } = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de" ? "de" : "en";
     private static readonly Dictionary<string, (string De, string En)> Text = new()
     {
+        ["Today"] = ("Heute", "Today"), ["Apps"] = ("Apps", "Apps"),
+        ["Featured"] = ("IM FOKUS", "FEATURED"), ["HeroTitle"] = ("Kleine Notch.\nGroße Möglichkeiten.", "Small notch.\nBig possibilities."),
+        ["HeroSubtitle"] = ("Musik, Fokus und dein Alltag. Immer griffbereit.", "Music, focus and your day. Always within reach."),
+        ["ViewApp"] = ("App entdecken", "Explore app"), ["ForYou"] = ("Für deinen Alltag", "For your everyday"),
+        ["CheckUpdates"] = ("Updates prüfen", "Check for updates"), ["Checking"] = ("Updates werden geprüft…", "Checking for updates…"),
+        ["Stars"] = ("GitHub-Sterne", "GitHub stars"), ["Community"] = ("Community", "Community"),
+        ["LoadingStars"] = ("Wird geladen…", "Loading…"), ["OfflineStars"] = ("Nicht verfügbar", "Unavailable"),
+        ["StarsHint"] = ("Sterne des GitHub-Repositories, keine App-Bewertung.", "Stars on the GitHub repository, not an app rating."),
+        ["AboutApp"] = ("Über diese App", "About this app"), ["Version"] = ("Version", "Version"),
+        ["Platform"] = ("Plattform", "Platform"), ["Back"] = ("Zurück", "Back"), ["Source"] = ("Auf GitHub ansehen", "View on GitHub"),
+        ["Preview"] = ("VORSCHAU", "PREVIEW"), ["AllApps"] = ("Alle Apps", "All apps"),
         ["Discover"] = ("Entdecken", "Discover"), ["Library"] = ("Mediathek", "Library"),
         ["Title"] = ("Deine Kzn-Programme.", "Your Kzn apps."),
         ["Subtitle"] = ("Ein Platz für alle deine Programme. Weitere Apps kommen mit neuen Katalogen hinzu.", "One place for all your apps. New catalogs bring more apps."),

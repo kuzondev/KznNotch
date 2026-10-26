@@ -4,6 +4,10 @@ Der Store startet mit Kzn Notch und unterstützt beliebig erweiterbare Programmk
 
 ## Aktueller Umfang
 
+- App-Store-inspirierte Heute-Ansicht mit Vorschau, Apps-Liste, Mediathek und App-Detailseiten. Die Vorschau ist eine Illustration der Oberfläche.
+- GitHub-Sterne aus dem jeweiligen Repository, klar als Community-Signal gekennzeichnet; keine erfundenen 5-Sterne-Bewertungen. Die Repository-API wird beim Öffnen und beim manuellen Updatecheck abgefragt, innerhalb eines geöffneten Stores maximal alle zehn Minuten automatisch. Fehler oder fehlende Daten erscheinen als „Nicht verfügbar“, eine echte Null bleibt eine Null.
+- „Updates prüfen“ ist auf allen Store-Seiten sichtbar und prüft das gemeinsame Notch-/Store-Paket über GitHub Releases. Der Dialog übernimmt die gewählte Store-Sprache.
+
 - Deutsch und Englisch, direkt umschaltbar und gespeichert. Die Systemsprache bestimmt die erste Auswahl; andere Sprachen verwenden Englisch.
 - Entdecken, Suche, Mediathek, installierte Versionen, Updates und Öffnen installierter Apps.
 - Kataloge ergänzen Programme anhand ihrer stabilen `Id`. Ein erneuter Import derselben Id aktualisiert den Eintrag.
@@ -25,6 +29,7 @@ Da noch kein öffentlicher Download konfiguriert ist, enthält der mitgelieferte
       "Version": "0.8.0.0",
       "PackageName": "Notchify.Desktop",
       "Publisher": "CN=Notchify Development",
+      "GitHubRepository": "kuzondev/KznNotch",
       "DownloadUrl": "",
       "Sha256": "",
       "Description": {
